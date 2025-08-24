@@ -6,9 +6,15 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_WEBAPP_NAME: teams-zoho-desk-bot    # Set this to your app name
+  AZURE_WEBAPP_NAME: teams-zoho-desk-bot    # TODO: Set this to your Azure App Service name
   AZURE_WEBAPP_PACKAGE_PATH: '.'           # Set this to the path to your web app project
   NODE_VERSION: '20.x'                     # Set this to the node version to use
+  
+# To enable Azure deployment:
+# 1. Create an Azure App Service with Node.js 20 LTS
+# 2. Download the publish profile from Azure Portal
+# 3. Add it as AZURE_WEBAPP_PUBLISH_PROFILE secret in GitHub repository settings
+# 4. Update AZURE_WEBAPP_NAME above to match your App Service name
 
 jobs:
   build-and-deploy:
@@ -37,8 +43,23 @@ jobs:
       run: npm test --if-present
 
     - name: 'Deploy to Azure WebApp'
+      if: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
       uses: azure/webapps-deploy@v2
       with:
         app-name: ${{ env.AZURE_WEBAPP_NAME }}
         publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
         package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+        
+    - name: 'Deployment Status'
+      run: |
+        if [ -z "${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}" ]; then
+          echo "⚠️  Azure deployment skipped - AZURE_WEBAPP_PUBLISH_PROFILE secret not configured"
+          echo "ℹ️  To enable Azure deployment:"
+          echo "   1. Create an Azure App Service"
+          echo "   2. Download the publish profile"
+          echo "   3. Add it as AZURE_WEBAPP_PUBLISH_PROFILE secret in GitHub"
+          echo "   4. Update AZURE_WEBAPP_NAME in this workflow"
+          echo "✅ Build completed successfully - ready for manual deployment"
+        else
+          echo "✅ Deployment to Azure completed successfully"
+        fi
