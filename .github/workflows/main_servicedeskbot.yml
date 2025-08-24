@@ -1,65 +1,37 @@
-name: Deploy to Azure App Service
+name: Deploy servicedeskbot to Azure App Service
 
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
 
-env:
-  AZURE_WEBAPP_NAME: teams-zoho-desk-bot    # TODO: Set this to your Azure App Service name
-  AZURE_WEBAPP_PACKAGE_PATH: '.'           # Set this to the path to your web app project
-  NODE_VERSION: '20.x'                     # Set this to the node version to use
-  
-# To enable Azure deployment:
-# 1. Create an Azure App Service with Node.js 20 LTS
-# 2. Download the publish profile from Azure Portal
-# 3. Add it as AZURE_WEBAPP_PUBLISH_PROFILE secret in GitHub repository settings
-# 4. Update AZURE_WEBAPP_NAME above to match your App Service name
+permissions:
+  contents: read
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: 'Checkout GitHub Action'
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js ${{ env.NODE_VERSION }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
 
-    - name: 'npm install'
-      run: |
-        npm install --production --no-audit
-        echo "Dependencies installed successfully"
+      - name: Install dependencies
+        run: npm ci --omit=dev
 
-    - name: 'Security audit and fix'
-      run: |
-        npm audit --production --audit-level=high || echo "Security audit completed with warnings"
-        
-    - name: 'Run tests'
-      run: npm test --if-present
+      - name: Create zip package
+        run: |
+          zip -r release.zip . -x ".git/*"
 
-    - name: 'Deploy to Azure WebApp'
-      if: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-      uses: azure/webapps-deploy@v2
-      with:
-        app-name: ${{ env.AZURE_WEBAPP_NAME }}
-        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-        package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
-        
-    - name: 'Deployment Status'
-      run: |
-        if [ -z "${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}" ]; then
-          echo "⚠️  Azure deployment skipped - AZURE_WEBAPP_PUBLISH_PROFILE secret not configured"
-          echo "ℹ️  To enable Azure deployment:"
-          echo "   1. Create an Azure App Service"
-          echo "   2. Download the publish profile"
-          echo "   3. Add it as AZURE_WEBAPP_PUBLISH_PROFILE secret in GitHub"
-          echo "   4. Update AZURE_WEBAPP_NAME in this workflow"
-          echo "✅ Build completed successfully - ready for manual deployment"
-        else
-          echo "✅ Deployment to Azure completed successfully"
-        fi
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: servicedeskbot            # <-- your Web App name
+          slot-name: Production
+          package: release.zip
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
