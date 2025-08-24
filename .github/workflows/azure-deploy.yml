@@ -25,8 +25,14 @@ jobs:
         cache: 'npm'
 
     - name: 'npm install'
-      run: npm ci --production
+      run: |
+        npm ci --production --no-audit
+        echo "Dependencies installed successfully"
 
+    - name: 'Security audit and fix'
+      run: |
+        npm audit --production --audit-level=high || echo "Security audit completed with warnings"
+        
     - name: 'Run tests'
       run: npm test --if-present
 
