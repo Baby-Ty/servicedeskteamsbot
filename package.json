@@ -1,0 +1,28 @@
+{
+  "name": "teams-zoho-desk-bot",
+  "version": "1.0.0",
+  "description": "Microsoft Teams bot that integrates with Zoho Desk for ticket management",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "microsoft-teams",
+    "bot",
+    "zoho-desk",
+    "azure"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "botbuilder": "^4.21.1",
+    "restify": "^11.1.0",
+    "axios": "^1.6.2",
+    "dotenv": "^16.3.1"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
